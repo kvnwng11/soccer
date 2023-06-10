@@ -1,5 +1,5 @@
 # Champions League 2022-2023 Final
-#### by Kevin Wang, June 6 2023
+#### by Kevin Wang, June 6, 2023
 
 On June 10 2023, Manchester City will face off against Inter Milan in the Champions League final. Manchester City defeated last year's winner Real Madrid en route to the final while Inter fended off city rivals AC Milan. Inter will be fighting for their 4th title while Manchester City have never won the Champions League. 
 
@@ -34,11 +34,6 @@ First, let's import our necessary packages.
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-
-# import sys
-# !{sys.executable} -m pip install --user numpy
-# !{sys.executable} -m pip install --user pandas
-# !{sys.executable} -m pip install --user scikit-learn
 ```
 
 Each feature vector $\mathbf{U_j} \in \mathbb{R}^d$ contains the following statistics:
@@ -598,99 +593,108 @@ features = features.iloc[3:]
 
 The following cell contains the match outcomes of every game played in the Champions League this season. Since the Bradley-Terry-Luce model does not use tie games, such games were omitted. A $0$ means that the first team won, and a $1$ means the second team won.
 
+Additionally, the first team is the home team.
+
 
 ```python
 comparisons = [
     ["Man City", "Real Madrid", 0],
     ["Inter", "Milan", 0],
-    ["Napoli", "Milan", 1],
+    ["Milan", "Inter", 1],
     ["Chelsea", "Real Madrid", 1],
-    ["Bayern", "Man City", 1],
-    ["Inter", "Benfica", 0],
+    ["Man City", "Bayern", 0],
+    ["Benfica", "Inter", 1],
+    ["Real Madrid", "Chelsea", 0],
+    ["Milan", "Napoli", 0],
     ["Benfica", "Club Brugge", 0],
     ["Chelsea", "Dortmund", 0],
     ["Bayern", "Paris", 0],
-    ["Tottenham", "Milan", 0],
     ["Man City", "Leipzig", 0],
-    ["Porto", "Inter", 1],
-    ["Real Madrid", "Liverpool", 0],
     ["Napoli", "Frankfurt", 0],
-    ["Porto", "Atletico", 0],
-    ["Liverpool", "Napoli", 0],
-    ["Rangers", "Ajax", 1],
+    ["Real Madrid", "Liverpool", 0],
+    ["Paris", "Bayern", 1],
+    ["Milan", "Tottenham", 0],
+    ["Benfica", "Club Brugge", 1],
+    ["Dortmund", "Chelsea", 0],
+    ["Liverpool", "Real Madrid", 0],
+    ["Frankfurt", "Napoli", 1],
+    ["Inter", "Porto", 0],
     ["Bayern", "Inter", 0],
-    ["Plzen", "Barcelona", 1],
-    ["Sporting CP", "Frankfurt", 1],
+    ["Liverpool", "Napoli", 0],
     ["Marseille", "Tottenham", 1],
     ["Real Madrid", "Celtic", 0],
     ["Shaktar Donetsk", "Leipzig", 1],
-    ["Chelsea", "Dinamo Zagreb", 0],
     ["Milan", "Salzburg", 0],
+    ["M. Haifa", "Benfica", 1],
     ["Man City", "Sevilla", 0],
     ["Juventus", "Paris", 1],
-    ["M. Haifa", "Benfica", 1],
+    ["Chelsea", "Dinamo Zagreb", 0],
+    ["Porto", "Atletico", 0],
+    ["Rangers", "Ajax", 1],
+    ["Plzen", "Barcelona", 1],
+    ["Sporting CP", "Frankfurt", 1],
     ["Salzburg", "Chelsea", 1],
     ["Sevilla", "Copenhagen", 0],
+    ["Paris", "M. Haifa", 0],
     ["Dinamo Zagreb", "Milan", 1],
-    ["Leipzig", "Real Madrid", 1],
-    ["Paris", "M. Haifa", 1],
-    ["Benfica", "Juventus", 1],
-    ["Club Brugge", "Porto", 1],
+    ["Benfica", "Juventus", 0],
+    ["Leipzig", "Real Madrid", 0],
     ["Inter", "Plzen", 0],
-    ["Napoli", "Rangers", 0],
-    ["Ajax", "Liverpool", 1],
+    ["Club Brugge", "Porto", 1],
+    ["Frankfurt", "Marseille", 0],
     ["Barcelona", "Bayern", 1],
-    ["Frankfurt", "Marseille", 1],
+    ["Ajax", "Liverpool", 1],
+    ["Napoli", "Rangers", 0],
     ["M. Haifa", "Juventus", 0],
     ["Milan", "Chelsea", 1],
     ["Celtic", "Leipzig", 1],
     ["Napoli", "Ajax", 0],
-    ["Rangers", "Liverpool", 1],
     ["Leverkusen", "Porto", 1],
+    ["Rangers", "Liverpool", 1],
     ["Plzen", "Bayern", 1],
     ["Tottenham", "Frankfurt", 0],
     ["Sporting CP", "Marseille", 1],
     ["Bayern", "Plzen", 0],
     ["Marseille", "Sporting CP", 0],
-    ["Liverpool", "Rangers", 0],
-    ["Ajax", "Napoli", 1],
     ["Porto", "Leverkusen", 0],
     ["Club Brugge", "Atletico", 0],
+    ["Ajax", "Napoli", 1],
     ["Inter", "Barcelona", 0],
+    ["Liverpool", "Rangers", 0],
     ["Salzburg", "Dinamo Zagreb", 0],
     ["Leipzig", "Celtic", 0],
     ["Chelsea", "Milan", 0],
-    ["Real Madrid", "Shaktar Donetsk", 0],
-    ["Man City", "Copenhagen", 0],
-    ["Sevilla", "Dortmund", 1],
     ["Juventus", "M. Haifa", 0],
+    ["Real Madrid", "Shaktar Donetsk", 0],
+    ["Sevilla", "Dortmund", 1],
+    ["Man City", "Copenhagen", 0],
     ["Plzen", "Inter", 1],
     ["Sporting CP", "Tottenham", 0],
     ["Liverpool", "Ajax", 0],
-    ["Porto", "Club Brugge", 1],
-    ["Leverkusen", "Atletico", 0],
     ["Bayern", "Barcelona", 0],
+    ["Porto", "Club Brugge", 1],
     ["Marseille", "Frankfurt", 1],
+    ["Leverkusen", "Atletico", 0],
     ["Milan", "Dinamo Zagreb", 0],
     ["Rangers", "Napoli", 1],
     ["Real Madrid", "Leipzig", 0],
-    ["Man City", "Dortmund", 0],
     ["Juventus", "Benfica", 1],
     ["M. Haifa", "Paris", 1],
+    ["Man City", "Dortmund", 0],
     ["Dinamo Zagreb", "Chelsea", 0],
     ["Dortmund", "Copenhagen", 0],
+    ["Benfica", "M. Haifa", 0],
+    ["Sevilla", "Man City", 1],
     ["Celtic", "Real Madrid", 1],
     ["Leipzig", "Shaktar Donetsk", 1],
-    ["Sevilla", "Man City", 1],
     ["Paris", "Juventus", 0],
-    ["Benfica", "M. Haifa", 0],
     ["Ajax", "Rangers", 0],
     ["Frankfurt", "Sporting CP", 1],
+    ["Inter", "Bayern", 1],
+    ["Barcelona", "Plzen", 0],
     ["Napoli", "Liverpool", 0],
     ["Atletico", "Porto", 0],
     ["Club Brugge", "Leverkusen", 0],
-    ["Barcelona", "Plzen", 0],
-    ["Inter", "Bayern", 1],
     ["Tottenham", "Marseille", 0]
 ]
 
@@ -705,7 +709,7 @@ for match in comparisons:
 
 Here we implement a Logistic Regression. We first construct the feature matrix $\mathbf{X}$ and the labels $\mathbf{y}$. We then compute the weights vector $\mathbf{w} \in \mathbb{R}^d$.
 
-To prevent overfitting, we add $\lambda {\lVert \mathbf{w} \rVert}^2_2$ to the maximum likelihood equation. Here, $\lambda=5$ which means $C=0.1$ in sklearn.
+To prevent overfitting, we add $\lambda {\lVert \mathbf{w} \rVert}^2_2$ to the maximum likelihood equation. Here, $\lambda=5$ which means $C=0.1$ in sklearn. To incorporate home field advantage, we extend each feature vector by a $1$ or $0$ depending on if the team was home or away.
 
 
 ```python
@@ -717,7 +721,13 @@ for comp in comparisons:
     team2 = comp[1]
     who_won = comp[2]
 
-    input_vector = np.array(features[team1]) - np.array(features[team2])
+    home_team = list(features[team1])
+    away_team = list(features[team2])
+
+    home_team.append(1)
+    away_team.append(0)
+
+    input_vector = np.asarray(home_team, dtype='float64') - np.asarray(away_team, dtype='float64')
 
     X.append(input_vector)
     y.append(who_won)
@@ -725,16 +735,17 @@ for comp in comparisons:
 
 X = np.array(X)
 
-weights = np.reshape(LogisticRegression(C=0.1, penalty='l2').fit(X, y).coef_, (len(features.index),))
+weights = np.reshape(LogisticRegression(C=0.1, penalty='l2').fit(X, y).coef_, (len(features.index)+1,))
 print("Weights:", weights)
 ```
 
-    Weights: [ 0.3037178  -0.32425822  0.04284418  0.09735456  0.04330833 -0.03328499
-      0.19177217  0.01938438 -0.01299722  0.05072668 -0.04004752  0.1664357
-      0.18120416]
+    Weights: [ 3.22762477e-01 -4.28347724e-01  2.87938458e-02  6.58029026e-02
+      1.79935566e-01  4.13596290e-02  2.39909103e-01  3.49497391e-02
+      6.04708499e-02 -2.21959969e-02 -4.55325989e-02  1.43537320e-01
+      3.18883686e-02  3.91885805e-06]
     
 
-It appears that the most important features when predicting who will win a match are goals per game, clean sheets per game, and corners per game.
+It appears that the most important features when predicting who will win a match are goals per game, clean sheets per game, and corners per game. It also appears that home field advantage is negligible.
 
 ---
 
@@ -747,7 +758,12 @@ Since we know $\mathbf{U_i} \in \mathbb{R}^d$ and $\mathbf{w} \in \mathbb{R}^d$,
 # Predict quality of each team
 pred_score = {}
 for column in features:
-    team = np.array(features[column])
+    # Prepare feature vector
+    team = list(features[column])
+    team.append(0)
+    team = np.asarray(team, dtype='float64')
+
+    # Predict
     pred_score[column] = np.exp(np.dot(team, weights))
 
 # Sort scores
@@ -763,35 +779,35 @@ for team in pred_score:
 ```
 
     -------- Rankings --------
-    1. Man City
-    2. Bayern
+    1. Bayern
+    2. Man City
     3. Inter
     4. Napoli
-    5. Liverpool
-    6. Real Madrid
+    5. Real Madrid
+    6. Liverpool
     7. Club Brugge
-    8. Benfica
-    9. Dortmund
-    10. Porto
-    11. Milan
+    8. Dortmund
+    9. Milan
+    10. Benfica
+    11. Porto
     12. Chelsea
     13. Tottenham
-    14. Leverkusen
-    15. Leipzig
-    16. Sevilla
-    17. Atletico
-    18. Paris
-    19. Barcelona
+    14. Leipzig
+    15. Sevilla
+    16. Leverkusen
+    17. Paris
+    18. Salzburg
+    19. Atletico
     20. Marseille
-    21. Salzburg
-    22. Ajax
+    21. Barcelona
+    22. Frankfurt
     23. Sporting CP
-    24. Frankfurt
+    24. Ajax
     25. Dinamo Zagreb
-    26. M. Haifa
-    27. Juventus
-    28. Copenhagen
-    29. Shaktar Donetsk
+    26. Copenhagen
+    27. Shaktar Donetsk
+    28. Juventus
+    29. M. Haifa
     30. Celtic
     31. Plzen
     32. Rangers
@@ -805,7 +821,7 @@ Now let's estimate the chance that Man City defeats Inter. This is defined as
 
 $$ P(i > j) = \frac{p_i}{p_i + p_j}$$
 
-where $i = \text{Man City}$ and $j = \text{Inter}$.
+where $i = \text{Man City}$ and $j = \text{Inter}$. Since the final is played on neutral ground, there is no home field advantage.
 
 
 ```python
@@ -814,10 +830,10 @@ prob = pred_score["Man City"] / (pred_score["Man City"] + pred_score["Inter"])
 print(prob)
 ```
 
-    0.7157084847452493
+    0.6414839183116584
     
 
-Manchester City has a 71.6% chance of winning the Champions League.
+Manchester City has a 64.1% chance of winning the Champions League.
 
 ---
 
