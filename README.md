@@ -226,7 +226,6 @@ comparisons = [
     ["Tottenham", "Marseille", 0]
 ]
 
-# Oops I have it backwards. The 1's need to be 0's and vice versa for logistic regression
 for match in comparisons:
     match[2] = 1 - match[2]
 ```
@@ -313,14 +312,14 @@ It appears that any home field advantage is negligible.
 
 ---
 
-## Universal Rankings
+## Ranking
 
 Here are the strength rankings of the teams:
 
 
 ```python
 # Predict quality of each team
-pred_score = {}
+pred_strength = {}
 for column in features:
     # Prepare feature vector
     team = list(features[column])
@@ -328,15 +327,15 @@ for column in features:
     team = np.asarray(team, dtype='float64')
 
     # Predict
-    pred_score[column] = np.exp(np.dot(team, weights))
+    pred_strength[column] = np.exp(np.dot(team, weights))
 
 # Sort scores
-pred_score = dict(sorted(pred_score.items(), key=lambda x : x[1], reverse=True))
+pred_strength = dict(sorted(pred_strength.items(), key=lambda x : x[1], reverse=True))
 
 # Print rankings
 rank = 1
 print("-------- Rankings --------")
-for team in pred_score:
+for team in pred_strength:
     output = str(rank) + ". " + str(team)
     print(output)
     rank += 1
@@ -383,14 +382,13 @@ for team in pred_score:
 
 The probability that Man City beats Inter Milan is:
 
-$$ P(i > j) = \frac{p_i}{p_i + p_j}$$
+$$ P(i > j) = \frac{s_i}{s_i + s_j}$$
 
 where $i = \text{Man City}$ and $j = \text{Inter}$.
 
 
 ```python
-# Probability that Man City beats Inter
-prob = pred_score["Man City"] / (pred_score["Man City"] + pred_score["Inter"])
+prob = pred_strength["Man City"] / (pred_strength["Man City"] + pred_strength["Inter"])
 print(prob)
 ```
 
