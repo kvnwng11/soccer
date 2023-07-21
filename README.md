@@ -1,48 +1,23 @@
 # Champions League 2022-2023 Final
-#### by Kevin Wang, June 6, 2023
-
-On June 10 2023, Manchester City will face off against Inter Milan in the Champions League final. Manchester City defeated last year's winner Real Madrid en route to the final while Inter fended off city rivals AC Milan. Inter will be fighting for their 4th title while Manchester City have never won the Champions League. 
-
-Using statistics and the Bradley-Terry-Luce model (BTL), we can assess the probability that Manchester City wins against Inter.
-
-Given teams $i$ and $j$, the BTL model estimages the probability that the pairwise comparison $i > j$ turns out true
-
-$$ P(i > j) = \frac{p_i}{p_i + p_j}$$
-
-where $p_i$ is a score assigned to team $i$ and measures the overall "quality" of the team.
-
----
-
-## The Model
-
-Now assume that we have $n = 32$ teams where each team $j$ has a known feature vector $\mathbf{U_j} \in \mathbb{R}^d$. We also assume that there is a *universal ranking* where each team can be ranked according to how good they are. This ranking is determined by an unknown weights vector $\mathbf{w} \in \mathbb{R}^d$ where the weights signify the importance of each feature in the ranking. The predicted match outcomes are independent Bernoulli are defined as
-
-$$ P(i \text{ beats } j) = \frac{e^{\langle \mathbf{U_i} , \mathbf{w} \rangle}}{e^{\langle \mathbf{U_i} , \mathbf{w} \rangle} + e^{\langle \mathbf{U_j} , \mathbf{w} \rangle}} $$
-
-We learn each $p_i = e^{\langle \mathbf{U_i} , \mathbf{w} \rangle}$ from data with maximum likelihood estimation. This can be solved with Logistic Regression.
-
-The model can predict hypothetical match-ups, which we will employ to predict the outcome of the final.
-
----
 
 ## Feature Extracting
-
-First, let's import our necessary packages.
 
 
 ```python
 import numpy as np
 import pandas as pd
+import random as rd
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import mean_squared_error
 ```
 
-Each feature vector $\mathbf{U_j} \in \mathbb{R}^d$ contains the following statistics:
+Each feature vector $\mathbf{U_j} \in \mathbb{R}^d$ contains the following statistics taken from the 2022-23 Champions League season:
 
 - Games won
 - Games lost
 - Games tied
 
-as well as the following *per-game* statistics:
+as well as the following per-game statistics:
 
 - Goals scored 
 - Goals conceded
@@ -57,8 +32,6 @@ as well as the following *per-game* statistics:
 - Red cards
 - Shots on goal
 - Corners
-
-All statistics were scraped from the offical UEFA Champions League website. The following cell loads in the data and reformats it into a Pandas dataframe:
 
 
 ```python
@@ -124,450 +97,7 @@ features = features.rename(index={
 })
 ```
 
-The following cell prints out the raw features:
-
-
-```python
-features
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Ajax</th>
-      <th>Atletico</th>
-      <th>Barcelona</th>
-      <th>Bayern</th>
-      <th>Benfica</th>
-      <th>Celtic</th>
-      <th>Chelsea</th>
-      <th>Club Brugge</th>
-      <th>Copenhagen</th>
-      <th>Dinamo Zagreb</th>
-      <th>...</th>
-      <th>Paris</th>
-      <th>Plzen</th>
-      <th>Porto</th>
-      <th>Rangers</th>
-      <th>Real Madrid</th>
-      <th>Salzburg</th>
-      <th>Sevilla</th>
-      <th>Shaktar Donetsk</th>
-      <th>Sporting CP</th>
-      <th>Tottenham</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>Games won</th>
-      <td>2.000000</td>
-      <td>1.000000</td>
-      <td>2.000000</td>
-      <td>8.00</td>
-      <td>6.00</td>
-      <td>0.000000</td>
-      <td>5.00</td>
-      <td>3.000</td>
-      <td>0.000000</td>
-      <td>1.000000</td>
-      <td>...</td>
-      <td>4.000</td>
-      <td>0.000000</td>
-      <td>4.000</td>
-      <td>0.000000</td>
-      <td>8.000000</td>
-      <td>1.000000</td>
-      <td>1.000000</td>
-      <td>1.00</td>
-      <td>2.000000</td>
-      <td>3.000</td>
-    </tr>
-    <tr>
-      <th>Games lost</th>
-      <td>0.000000</td>
-      <td>2.000000</td>
-      <td>1.000000</td>
-      <td>1.00</td>
-      <td>3.00</td>
-      <td>2.000000</td>
-      <td>1.00</td>
-      <td>2.000</td>
-      <td>3.000000</td>
-      <td>1.000000</td>
-      <td>...</td>
-      <td>2.000</td>
-      <td>0.000000</td>
-      <td>1.000</td>
-      <td>0.000000</td>
-      <td>2.000000</td>
-      <td>3.000000</td>
-      <td>2.000000</td>
-      <td>3.00</td>
-      <td>1.000000</td>
-      <td>3.000</td>
-    </tr>
-    <tr>
-      <th>Games tied</th>
-      <td>4.000000</td>
-      <td>3.000000</td>
-      <td>3.000000</td>
-      <td>1.00</td>
-      <td>1.00</td>
-      <td>4.000000</td>
-      <td>4.00</td>
-      <td>3.000</td>
-      <td>3.000000</td>
-      <td>4.000000</td>
-      <td>...</td>
-      <td>2.000</td>
-      <td>6.000000</td>
-      <td>3.000</td>
-      <td>6.000000</td>
-      <td>2.000000</td>
-      <td>2.000000</td>
-      <td>3.000000</td>
-      <td>2.00</td>
-      <td>3.000000</td>
-      <td>2.000</td>
-    </tr>
-    <tr>
-      <th>Goals scored</th>
-      <td>1.840000</td>
-      <td>0.840000</td>
-      <td>2.000000</td>
-      <td>2.21</td>
-      <td>2.60</td>
-      <td>0.670000</td>
-      <td>1.20</td>
-      <td>1.000</td>
-      <td>0.170000</td>
-      <td>0.670000</td>
-      <td>...</td>
-      <td>2.000</td>
-      <td>0.840000</td>
-      <td>1.500</td>
-      <td>0.340000</td>
-      <td>2.170000</td>
-      <td>0.840000</td>
-      <td>1.000000</td>
-      <td>1.34</td>
-      <td>1.340000</td>
-      <td>1.000</td>
-    </tr>
-    <tr>
-      <th>Goals conceded</th>
-      <td>2.670000</td>
-      <td>1.500000</td>
-      <td>2.000000</td>
-      <td>0.60</td>
-      <td>1.30</td>
-      <td>2.500000</td>
-      <td>0.90</td>
-      <td>1.380</td>
-      <td>2.000000</td>
-      <td>1.840000</td>
-      <td>...</td>
-      <td>1.250</td>
-      <td>4.000000</td>
-      <td>1.000</td>
-      <td>3.670000</td>
-      <td>1.090000</td>
-      <td>1.500000</td>
-      <td>2.000000</td>
-      <td>1.67</td>
-      <td>1.500000</td>
-      <td>0.880</td>
-    </tr>
-    <tr>
-      <th>Possession %</th>
-      <td>53.670000</td>
-      <td>54.000000</td>
-      <td>62.500000</td>
-      <td>54.60</td>
-      <td>52.50</td>
-      <td>44.170000</td>
-      <td>55.30</td>
-      <td>46.880</td>
-      <td>38.670000</td>
-      <td>47.500000</td>
-      <td>...</td>
-      <td>53.750</td>
-      <td>32.670000</td>
-      <td>48.000</td>
-      <td>40.670000</td>
-      <td>52.750000</td>
-      <td>40.500000</td>
-      <td>50.500000</td>
-      <td>44.50</td>
-      <td>47.670000</td>
-      <td>48.880</td>
-    </tr>
-    <tr>
-      <th>Passing accuracy</th>
-      <td>85.000000</td>
-      <td>86.500000</td>
-      <td>88.840000</td>
-      <td>88.30</td>
-      <td>86.70</td>
-      <td>87.500000</td>
-      <td>87.30</td>
-      <td>82.000</td>
-      <td>82.000000</td>
-      <td>82.670000</td>
-      <td>...</td>
-      <td>89.880</td>
-      <td>76.170000</td>
-      <td>80.250</td>
-      <td>79.500000</td>
-      <td>89.920000</td>
-      <td>71.840000</td>
-      <td>85.340000</td>
-      <td>86.50</td>
-      <td>81.840000</td>
-      <td>85.000</td>
-    </tr>
-    <tr>
-      <th>Balls recovered</th>
-      <td>41.000000</td>
-      <td>39.340000</td>
-      <td>38.500000</td>
-      <td>42.60</td>
-      <td>41.10</td>
-      <td>36.340000</td>
-      <td>44.20</td>
-      <td>36.880</td>
-      <td>36.840000</td>
-      <td>39.340000</td>
-      <td>...</td>
-      <td>41.630</td>
-      <td>37.170000</td>
-      <td>41.130</td>
-      <td>36.500000</td>
-      <td>35.920000</td>
-      <td>45.340000</td>
-      <td>34.500000</td>
-      <td>39.00</td>
-      <td>37.670000</td>
-      <td>40.750</td>
-    </tr>
-    <tr>
-      <th>Tackles won</th>
-      <td>7.000000</td>
-      <td>4.670000</td>
-      <td>4.000000</td>
-      <td>5.50</td>
-      <td>5.40</td>
-      <td>4.840000</td>
-      <td>3.80</td>
-      <td>3.250</td>
-      <td>2.670000</td>
-      <td>5.000000</td>
-      <td>...</td>
-      <td>5.000</td>
-      <td>3.340000</td>
-      <td>4.380</td>
-      <td>6.000000</td>
-      <td>5.090000</td>
-      <td>7.670000</td>
-      <td>5.840000</td>
-      <td>5.67</td>
-      <td>4.000000</td>
-      <td>3.250</td>
-    </tr>
-    <tr>
-      <th>Clean sheets</th>
-      <td>0.170000</td>
-      <td>0.170000</td>
-      <td>0.000000</td>
-      <td>0.70</td>
-      <td>0.20</td>
-      <td>0.000000</td>
-      <td>0.30</td>
-      <td>0.630</td>
-      <td>0.340000</td>
-      <td>0.170000</td>
-      <td>...</td>
-      <td>0.000</td>
-      <td>0.000000</td>
-      <td>0.500</td>
-      <td>0.000000</td>
-      <td>0.420000</td>
-      <td>0.170000</td>
-      <td>0.340000</td>
-      <td>0.00</td>
-      <td>0.340000</td>
-      <td>0.380</td>
-    </tr>
-    <tr>
-      <th>Saves</th>
-      <td>3.670000</td>
-      <td>3.170000</td>
-      <td>3.170000</td>
-      <td>3.10</td>
-      <td>1.90</td>
-      <td>2.670000</td>
-      <td>2.70</td>
-      <td>4.380</td>
-      <td>4.500000</td>
-      <td>4.170000</td>
-      <td>...</td>
-      <td>3.250</td>
-      <td>5.340000</td>
-      <td>3.880</td>
-      <td>4.840000</td>
-      <td>3.750000</td>
-      <td>3.670000</td>
-      <td>3.000000</td>
-      <td>5.17</td>
-      <td>3.670000</td>
-      <td>2.880</td>
-    </tr>
-    <tr>
-      <th>Distance covered (km)</th>
-      <td>113.370000</td>
-      <td>118.390000</td>
-      <td>118.640000</td>
-      <td>120.19</td>
-      <td>108.89</td>
-      <td>101.370000</td>
-      <td>107.63</td>
-      <td>118.570</td>
-      <td>120.970000</td>
-      <td>109.080000</td>
-      <td>...</td>
-      <td>108.520</td>
-      <td>110.130000</td>
-      <td>120.830</td>
-      <td>110.940000</td>
-      <td>101.360000</td>
-      <td>116.080000</td>
-      <td>114.720000</td>
-      <td>117.22</td>
-      <td>109.160000</td>
-      <td>120.380</td>
-    </tr>
-    <tr>
-      <th>Yellow cards</th>
-      <td>2.500000</td>
-      <td>2.170000</td>
-      <td>1.670000</td>
-      <td>2.30</td>
-      <td>1.90</td>
-      <td>1.170000</td>
-      <td>2.50</td>
-      <td>3.380</td>
-      <td>2.000000</td>
-      <td>2.170000</td>
-      <td>...</td>
-      <td>1.750</td>
-      <td>2.000000</td>
-      <td>3.130</td>
-      <td>1.670000</td>
-      <td>1.250000</td>
-      <td>1.840000</td>
-      <td>2.170000</td>
-      <td>2.67</td>
-      <td>2.840000</td>
-      <td>2.750</td>
-    </tr>
-    <tr>
-      <th>Red cards</th>
-      <td>0.170000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.20</td>
-      <td>0.00</td>
-      <td>0.000000</td>
-      <td>0.10</td>
-      <td>0.130</td>
-      <td>0.170000</td>
-      <td>0.000000</td>
-      <td>...</td>
-      <td>0.000</td>
-      <td>0.170000</td>
-      <td>0.380</td>
-      <td>0.170000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.00</td>
-      <td>0.500000</td>
-      <td>0.250</td>
-    </tr>
-    <tr>
-      <th>Shots on goal</th>
-      <td>3.833333</td>
-      <td>5.833333</td>
-      <td>5.666667</td>
-      <td>7.20</td>
-      <td>5.20</td>
-      <td>4.833333</td>
-      <td>5.40</td>
-      <td>2.875</td>
-      <td>2.666667</td>
-      <td>3.333333</td>
-      <td>...</td>
-      <td>5.375</td>
-      <td>3.333333</td>
-      <td>5.000</td>
-      <td>2.000000</td>
-      <td>6.333333</td>
-      <td>4.333333</td>
-      <td>4.000000</td>
-      <td>2.50</td>
-      <td>3.500000</td>
-      <td>3.875</td>
-    </tr>
-    <tr>
-      <th>Corners</th>
-      <td>4.333333</td>
-      <td>6.500000</td>
-      <td>6.666667</td>
-      <td>3.80</td>
-      <td>4.90</td>
-      <td>5.333333</td>
-      <td>5.30</td>
-      <td>3.500</td>
-      <td>3.500000</td>
-      <td>2.500000</td>
-      <td>...</td>
-      <td>4.875</td>
-      <td>3.666667</td>
-      <td>4.375</td>
-      <td>3.333333</td>
-      <td>5.333333</td>
-      <td>4.000000</td>
-      <td>2.833333</td>
-      <td>2.50</td>
-      <td>3.333333</td>
-      <td>5.625</td>
-    </tr>
-  </tbody>
-</table>
-<p>16 rows × 32 columns</p>
-</div>
-
-
-
-Since our data contains really large and really small numbers, it would be nice to normalize our features to be of the same magnitude. Note that this does not change the distribution of the features, so our model should still learn the same patterns in the data.
+Since the data contains really large and really small numbers, it makes sense to normalize the features.
 
 
 ```python
@@ -580,7 +110,7 @@ for idx, row in features.iterrows():
         features[team][idx] = (features[team][idx] - mean) / var
 ```
 
-Additionally, we don't want to include the first three rows (Games won, Games lost, Games tied) as they introduce bias into the model.
+Additionally, the first three rows (Games won, Games lost, Games tied) introduce bias. It makes sense to remove them too.
 
 
 ```python
@@ -589,11 +119,9 @@ features = features.iloc[3:]
 
 ---
 
-## Match Outcomes from the 2022-23 Champions League Season
+## Match Outcomes
 
-The following cell contains the match outcomes of every game played in the Champions League this season. Since the Bradley-Terry-Luce model does not use tie games, such games were omitted. A $0$ means that the first team won, and a $1$ means the second team won.
-
-Additionally, the first team is the home team.
+The following cell contains the outcomes of every win/loss game in the 2022-23 season. A $0$ means that the first (home) team won, and a $1$ means the second (away) team won. 
 
 
 ```python
@@ -707,9 +235,6 @@ for match in comparisons:
 
 ## Model Training
 
-Here we implement a Logistic Regression. We first construct the feature matrix $\mathbf{X}$ and the labels $\mathbf{y}$. We then compute the weights vector $\mathbf{w} \in \mathbb{R}^d$.
-
-To prevent overfitting, we add $\lambda {\lVert \mathbf{w} \rVert}^2_2$ to the maximum likelihood equation. Here, $\lambda=5$ which means $C=0.1$ in sklearn. To incorporate home field advantage, we extend each feature vector by a $1$ or $0$ depending on if the team was home or away.
 
 
 ```python
@@ -732,10 +257,49 @@ for comp in comparisons:
     X.append(input_vector)
     y.append(who_won)
 
-
 X = np.array(X)
+y = np.array(y)
 
-weights = np.reshape(LogisticRegression(C=0.1, penalty='l2').fit(X, y).coef_, (len(features.index)+1,))
+### Search for optimal lambda
+
+# Helper function
+def split(lst, k):
+    n, m = divmod(len(lst), k)
+    return (lst[i*n+min(i, m):(i+1)*n+min(i+1, m)] for i in range(k))
+
+# Declare variables
+search_space = np.linspace(0.1, 2, 20)
+k = 6
+num_games = X.shape[0]
+indices = [i for i in range(num_games)]
+min_loss = float('inf')
+Lambda = 0
+
+# Search parameter space
+for lam in search_space:
+    # Repeat for less variance
+    for i in range(10):
+        # Random partition of data
+        shuffle = np.array(indices)
+        rd.shuffle(shuffle)
+        partition = list(split(shuffle, k))
+
+        # Cross validation
+        for p in partition:
+            idx = np.delete(shuffle, p)
+            sample_x = X[idx, :]
+            sample_y = y[idx]
+
+            LR = LogisticRegression(C=lam, penalty='l2').fit(X, y)
+            y_pred = LR.predict(X[p, :])
+            mse = mean_squared_error(y_pred, y[p])
+
+            if mse < min_loss:
+                min_loss = mse
+                Lambda = lam
+
+### Fit model
+weights = np.reshape(LogisticRegression(C=Lambda, penalty='l2').fit(X, y).coef_, (len(features.index)+1,))
 print("Weights:", weights)
 ```
 
@@ -743,15 +307,15 @@ print("Weights:", weights)
       1.79935566e-01  4.13596290e-02  2.39909103e-01  3.49497391e-02
       6.04708499e-02 -2.21959969e-02 -4.55325989e-02  1.43537320e-01
       3.18883686e-02  3.91885805e-06]
-    
 
-It appears that the most important features when predicting who will win a match are goals per game, clean sheets per game, and corners per game. It also appears that home field advantage is negligible.
+
+It appears that any home field advantage is negligible.
 
 ---
 
 ## Universal Rankings
 
-Since we know $\mathbf{U_i} \in \mathbb{R}^d$ and $\mathbf{w} \in \mathbb{R}^d$, we can compute the quality of each team, $p_i = \exp(\mathbf{U_i} \cdot \mathbf{w})$. Here we rank each team according to their score.
+Here are the strength rankings of the teams:
 
 
 ```python
@@ -811,17 +375,17 @@ for team in pred_score:
     30. Celtic
     31. Plzen
     32. Rangers
-    
+
 
 ---
 
 # Final Match Prediction
 
-Now let's estimate the chance that Man City defeats Inter. This is defined as
+The probability that Man City beats Inter Milan is:
 
 $$ P(i > j) = \frac{p_i}{p_i + p_j}$$
 
-where $i = \text{Man City}$ and $j = \text{Inter}$. Since the final is played on neutral ground, there is no home field advantage.
+where $i = \text{Man City}$ and $j = \text{Inter}$.
 
 
 ```python
@@ -830,14 +394,12 @@ prob = pred_score["Man City"] / (pred_score["Man City"] + pred_score["Inter"])
 print(prob)
 ```
 
-    0.6414839183116584
-    
+    0.6414839183116747
 
-Manchester City has a 64.1% chance of winning the Champions League.
 
 ---
 
-# Why can this be solved with Logistic Regression?
+# Proofs
 
 ## Logistic Regression
 
@@ -880,19 +442,5 @@ $$
 $$
 
 This is logistic regression with $x_\ell = \mathbf{U_{i_\ell}} - \mathbf{U_{j_\ell}}$.
-
-## Summary
-
-The log-likelihood of both Logistic Regression and the Bradley-Terry-Luce model can be written in the form:
-
-$$
- L = \log(\prod_{i=1}^{n} \mathbb{P}(y_i = 1 | x_i, \theta)^{y_i} \mathbb{P}(y_i = 0 | x_i, \theta)^{1 - y_i} )
-$$
-
-so Bradley-Terry-Luce can be solved with Logistic Regression.
-
-# Biases
-
-The model suffers from bias. The first is a form of look-ahead bias. The feature vectors $\mathbf{U_J} \in \mathbb{R}^d$ contain information from the later stages of the Champions League, which was not present in the earlier games. Another form of bias is that the model does not consider home-field advantages. But because the final is played on neutral ground, this may not be an issue. 
 
 
