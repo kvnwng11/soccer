@@ -1,5 +1,27 @@
 # Champions League 2022-2023 Final
 
+This repository contains code to predict the outcome of the Champions League final using machine learning. The model is a fitted [Bradley-Terry](https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model) model that considers factors such as red cards and home field advantage. The model was trained on 98 games from the 2022-23 Champions League season ([source](https://www.uefa.com/uefachampionsleague/news/0278-15f75b23e213-5bd0ebc0ce50-1000--all-the-2022-23-champions-league-scores-results/)), was built using Python and the [scikit-learn](https://scikit-learn.org/stable/) library, and utilizes 6-fold cross validation to select hyperparameters.
+
+## Table of Contents
+
+1. [Background](#background)
+2. [Feature Extracting](#feature-extracting)
+3. [Dataset](#dataset)
+4. [Model Training](#model-training)
+5. [Rankings](#rankings)
+6. [Final Match Prediction](#final-match-prediction)
+7. [Proofs](#proofs)
+
+## Background
+
+The probability that team $i$ beats team $j$ is defined as
+
+$$ P(\text{team i beats j}) = \frac{p_i}{p_i + p_j}$$
+
+where $p_i$ is the learned "skill" of team $i$ and $p_j$ is the learned skill of team $j$. Each team is assumed to have a known feature vector $\mathbf{U_j} \in \mathbb{R}^d$. It is also assumed that the teams share a universal ranking determined by unknown weights vector $\mathbf{w^*} \in \mathbb{R}^d$. Then for a general weights vector $\mathbf{w} \in \mathbb{R}^d$, the outcomes are independent Bernoulli with parameter 
+
+$$ P(\text{team i beats j}) = \frac{e^{\langle \mathbf{U_i} , \mathbf{w} \rangle}}{e^{\langle \mathbf{U_i} , \mathbf{w} \rangle} + e^{\langle \mathbf{U_j} , \mathbf{w} \rangle}}$$
+
 ## Feature Extracting
 
 
@@ -117,9 +139,11 @@ Additionally, the first three rows (Games won, Games lost, Games tied) introduce
 features = features.iloc[3:]
 ```
 
+[top](#champions-league-2022-2023-final)
+
 ---
 
-## Match Outcomes
+## Dataset
 
 The following cell contains the outcomes of every win/loss game in the 2022-23 season. A $0$ means that the first (home) team won, and a $1$ means the second (away) team won. 
 
@@ -230,6 +254,8 @@ for match in comparisons:
     match[2] = 1 - match[2]
 ```
 
+[top](#champions-league-2022-2023-final)
+
 ---
 
 ## Model Training
@@ -276,14 +302,12 @@ Lambda = 0
 
 # Search parameter space
 for lam in search_space:
-    # Repeat for less variance
+    # Cross validation
     for i in range(10):
-        # Random partition of data
         shuffle = np.array(indices)
         rd.shuffle(shuffle)
         partition = list(split(shuffle, k))
 
-        # Cross validation
         for p in partition:
             idx = np.delete(shuffle, p)
             sample_x = X[idx, :]
@@ -310,9 +334,11 @@ print("Weights:", weights)
 
 It appears that any home field advantage is negligible.
 
+[top](#champions-league-2022-2023-final)
+
 ---
 
-## Ranking
+## Rankings
 
 Here are the strength rankings of the teams:
 
@@ -376,6 +402,8 @@ for team in pred_strength:
     32. Rangers
 
 
+[top](#champions-league-2022-2023-final)
+
 ---
 
 # Final Match Prediction
@@ -394,6 +422,8 @@ print(prob)
 
     0.6414839183116747
 
+
+[top](#champions-league-2022-2023-final)
 
 ---
 
