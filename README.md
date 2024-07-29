@@ -1,6 +1,6 @@
 # Champions League 2022-2023 Final
 
-This repository contains code to predict the outcome of the Champions League final using machine learning. The model is a fitted [Bradley-Terry](https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model) model that considers factors such as red cards and home field advantage. The model was trained on 98 games from the 2022-23 Champions League season ([source](https://www.uefa.com/uefachampionsleague/news/0278-15f75b23e213-5bd0ebc0ce50-1000--all-the-2022-23-champions-league-scores-results/)), was built using Python and the [scikit-learn](https://scikit-learn.org/stable/) library, and utilizes 6-fold cross validation to select hyperparameters.
+The model is a Bradley-Terry model trained on 98 games from the 2022-23 Champions League season ([source](https://www.uefa.com/uefachampionsleague/news/0278-15f75b23e213-5bd0ebc0ce50-1000--all-the-2022-23-champions-league-scores-results/)).
 
 ## Table of Contents
 
