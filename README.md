@@ -1,6 +1,6 @@
 # Champions League 2022-2023 Final
 
-The model is a Bradley-Terry model trained on 98 games from the 2022-23 Champions League season ([source](https://www.uefa.com/uefachampionsleague/news/0278-15f75b23e213-5bd0ebc0ce50-1000--all-the-2022-23-champions-league-scores-results/)).
+The model correctly predicted the winner of the the 2022-23 Champions League season.
 
 ## Table of Contents
 
